@@ -4,12 +4,18 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/dshills/aied/internal/ai"
 	"github.com/dshills/aied/internal/buffer"
+	"github.com/dshills/aied/internal/commands"
 	"github.com/dshills/aied/internal/modes"
 	"github.com/dshills/aied/internal/ui"
 )
 
 func main() {
+	// Initialize AI system
+	aiManager := initializeAI()
+	commands.SetAIManager(aiManager)
+
 	// Create a new buffer
 	var buf *buffer.Buffer
 	var err error
@@ -93,4 +99,49 @@ func handleFallbackKeyEvent(event ui.KeyEvent, buf *buffer.Buffer, terminalUI *u
 	}
 
 	return false
+}
+
+// initializeAI sets up the AI system with available providers
+func initializeAI() *ai.AIManager {
+	aiManager := ai.NewAIManager()
+
+	// Initialize providers based on environment variables
+	// OpenAI
+	if apiKey := os.Getenv("OPENAI_API_KEY"); apiKey != "" {
+		provider := ai.NewOpenAIProvider()
+		provider.Configure(ai.ProviderConfig{
+			APIKey: apiKey,
+			Model:  "gpt-4",
+		})
+		aiManager.RegisterProvider(provider)
+	}
+
+	// Anthropic
+	if apiKey := os.Getenv("ANTHROPIC_API_KEY"); apiKey != "" {
+		provider := ai.NewAnthropicProvider()
+		provider.Configure(ai.ProviderConfig{
+			APIKey: apiKey,
+			Model:  "claude-3-5-sonnet-20241022",
+		})
+		aiManager.RegisterProvider(provider)
+	}
+
+	// Google
+	if apiKey := os.Getenv("GOOGLE_API_KEY"); apiKey != "" {
+		provider := ai.NewGoogleProvider()
+		provider.Configure(ai.ProviderConfig{
+			APIKey: apiKey,
+			Model:  "gemini-1.5-flash",
+		})
+		aiManager.RegisterProvider(provider)
+	}
+
+	// Ollama (always try to register - it will check if available)
+	ollamaProvider := ai.NewOllamaProvider()
+	ollamaProvider.Configure(ai.ProviderConfig{
+		Model: "llama2",
+	})
+	aiManager.RegisterProvider(ollamaProvider)
+
+	return aiManager
 }

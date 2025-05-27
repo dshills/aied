@@ -49,6 +49,13 @@ func NewCommandRegistry() *CommandRegistry {
 	registry.RegisterCommand(NewEditCommand())
 	registry.RegisterCommand(NewNewCommand())
 	
+	// Register AI commands
+	registry.RegisterCommand(NewAICompleteCommand())
+	registry.RegisterCommand(NewAIExplainCommand())
+	registry.RegisterCommand(NewAIRefactorCommand())
+	registry.RegisterCommand(NewAIChatCommand())
+	registry.RegisterCommand(NewAIProviderCommand())
+	
 	return registry
 }
 
