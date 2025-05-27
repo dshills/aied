@@ -13,12 +13,22 @@ type Position struct {
 	Col  int // 0-based column number
 }
 
+// Diagnostic represents an LSP diagnostic message
+type Diagnostic struct {
+	Line     int
+	Column   int
+	Severity int // 1=Error, 2=Warning, 3=Info, 4=Hint
+	Message  string
+	Source   string
+}
+
 // Buffer represents a text buffer with cursor tracking
 type Buffer struct {
-	lines    []string // Text content stored as lines
-	cursor   Position // Current cursor position
-	filename string   // Associated filename (empty for new buffer)
-	modified bool     // Whether buffer has unsaved changes
+	lines       []string      // Text content stored as lines
+	cursor      Position      // Current cursor position
+	filename    string        // Associated filename (empty for new buffer)
+	modified    bool          // Whether buffer has unsaved changes
+	diagnostics []Diagnostic  // LSP diagnostics for this buffer
 }
 
 // New creates a new empty buffer
@@ -409,4 +419,25 @@ func (b *Buffer) SaveAs(filename string) error {
 	b.setModified(false)
 
 	return nil
+}
+
+// SetDiagnostics updates the diagnostics for this buffer
+func (b *Buffer) SetDiagnostics(diagnostics []Diagnostic) {
+	b.diagnostics = diagnostics
+}
+
+// GetDiagnostics returns the current diagnostics for this buffer
+func (b *Buffer) GetDiagnostics() []Diagnostic {
+	return b.diagnostics
+}
+
+// GetDiagnosticsForLine returns diagnostics for a specific line
+func (b *Buffer) GetDiagnosticsForLine(line int) []Diagnostic {
+	var result []Diagnostic
+	for _, diag := range b.diagnostics {
+		if diag.Line == line {
+			result = append(result, diag)
+		}
+	}
+	return result
 }

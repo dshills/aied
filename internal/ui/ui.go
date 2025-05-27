@@ -4,14 +4,16 @@ import (
 	"fmt"
 
 	"github.com/dshills/aied/internal/buffer"
+	"github.com/gdamore/tcell/v2"
 )
 
 // UI manages the terminal user interface
 type UI struct {
-	screen    *Screen
-	renderer  *Renderer
-	processor *EventProcessor
-	running   bool
+	screen           *Screen
+	renderer         *Renderer
+	processor        *EventProcessor
+	completionPopup  *CompletionPopup
+	running          bool
 }
 
 // NewUI creates a new terminal UI
@@ -23,12 +25,14 @@ func NewUI() (*UI, error) {
 
 	renderer := NewRenderer(screen)
 	processor := NewEventProcessor(screen)
+	completionPopup := NewCompletionPopup()
 
 	return &UI{
-		screen:    screen,
-		renderer:  renderer,
-		processor: processor,
-		running:   true,
+		screen:          screen,
+		renderer:        renderer,
+		processor:       processor,
+		completionPopup: completionPopup,
+		running:         true,
 	}, nil
 }
 
@@ -48,6 +52,12 @@ func (ui *UI) IsRunning() bool {
 // Render draws the buffer to the screen
 func (ui *UI) Render(buf *buffer.Buffer) {
 	ui.renderer.RenderBuffer(buf)
+	
+	// Render completion popup if visible
+	if ui.completionPopup.IsVisible() {
+		ui.completionPopup.Render(ui.renderer.screen, ui.renderer.styles)
+		ui.renderer.screen.Show()
+	}
 }
 
 // RenderWithMode draws the buffer to the screen with mode information
@@ -83,12 +93,22 @@ func (ui *UI) RenderWithModeAndCommand(buf *buffer.Buffer, modeText, commandLine
 			continue
 		}
 		
-		// Render the line with cursor highlighting
-		ui.renderer.renderLine(screenY, line, bufferLine, cursor)
+		// Render the line with cursor and diagnostic highlighting
+		diagnostics := buf.GetDiagnosticsForLine(bufferLine)
+		if len(diagnostics) > 0 {
+			ui.renderer.renderLineWithDiagnostics(screenY, line, bufferLine, cursor, diagnostics)
+		} else {
+			ui.renderer.renderLine(screenY, line, bufferLine, cursor)
+		}
 	}
 	
 	// Render status line with mode, command line, and message
 	ui.renderer.renderStatusLineWithModeAndCommand(buf, modeText, commandLine, message)
+	
+	// Render completion popup if visible
+	if ui.completionPopup.IsVisible() {
+		ui.completionPopup.Render(ui.renderer.screen, ui.renderer.styles)
+	}
 	
 	ui.renderer.screen.Show()
 }
@@ -133,4 +153,54 @@ func (ui *UI) PostQuit() {
 // GetViewport returns the current viewport information
 func (ui *UI) GetViewport() Viewport {
 	return ui.renderer.GetViewport()
+}
+
+// ShowCompletions displays the completion popup with the given items
+func (ui *UI) ShowCompletions(items []CompletionItem, x, y int) {
+	ui.completionPopup.SetItems(items)
+	ui.completionPopup.Show(x, y)
+}
+
+// HideCompletions hides the completion popup
+func (ui *UI) HideCompletions() {
+	ui.completionPopup.Hide()
+}
+
+// IsCompletionVisible returns whether the completion popup is visible
+func (ui *UI) IsCompletionVisible() bool {
+	return ui.completionPopup.IsVisible()
+}
+
+// MoveCompletionUp moves the selection up in the completion popup
+func (ui *UI) MoveCompletionUp() {
+	ui.completionPopup.MoveUp()
+}
+
+// MoveCompletionDown moves the selection down in the completion popup
+func (ui *UI) MoveCompletionDown() {
+	ui.completionPopup.MoveDown()
+}
+
+// GetSelectedCompletion returns the currently selected completion item
+func (ui *UI) GetSelectedCompletion() *CompletionItem {
+	return ui.completionPopup.GetSelectedItem()
+}
+
+// GetScreen returns the underlying screen for direct rendering
+func (ui *UI) GetScreen() *Screen {
+	return ui.screen
+}
+
+// GetStyle returns a style for the given name
+func GetStyle(name string) tcell.Style {
+	switch name {
+	case "normal":
+		return tcell.StyleDefault.Foreground(tcell.ColorWhite).Background(tcell.ColorBlack)
+	case "selected":
+		return tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tcell.ColorBlue)
+	case "border":
+		return tcell.StyleDefault.Foreground(tcell.ColorGray).Background(tcell.ColorBlack)
+	default:
+		return tcell.StyleDefault
+	}
 }

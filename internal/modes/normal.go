@@ -10,6 +10,7 @@ import (
 // NormalMode implements VIM normal mode behavior
 type NormalMode struct {
 	lastCommand rune // For repeat operations (.)
+	gPrefix     bool // Whether 'g' was pressed (for two-char commands)
 }
 
 // NewNormalMode creates a new normal mode instance
@@ -40,6 +41,29 @@ func (n *NormalMode) HandleInput(event ui.KeyEvent, buf *buffer.Buffer) ModeResu
 
 // handleCharacter processes character input in normal mode
 func (n *NormalMode) handleCharacter(ch rune, buf *buffer.Buffer) ModeResult {
+	// Handle g-prefix commands
+	if n.gPrefix {
+		n.gPrefix = false
+		switch ch {
+		case 'd':
+			// Go to definition
+			return n.executeLSPCommand(":definition", buf)
+		case 'h':
+			// Show hover information
+			return n.executeLSPCommand(":hover", buf)
+		case 'r':
+			// Find references
+			return n.executeLSPCommand(":references", buf)
+		case 'g':
+			// gg - go to first line
+			buf.SetCursor(buffer.Position{Line: 0, Col: 0})
+			return ModeResult{Handled: true}
+		default:
+			// Unknown g command
+			return ModeResult{Handled: true}
+		}
+	}
+	
 	switch ch {
 	// Basic movement (hjkl)
 	case 'h':
@@ -119,6 +143,11 @@ func (n *NormalMode) handleCharacter(ch rune, buf *buffer.Buffer) ModeResult {
 	// Undo/Redo
 	case 'u':
 		// TODO: Implement undo
+		return ModeResult{Handled: true}
+	
+	// Two-character commands
+	case 'g':
+		n.gPrefix = true
 		return ModeResult{Handled: true}
 
 	default:
@@ -381,5 +410,16 @@ func (n *NormalMode) OnExit(buf *buffer.Buffer) {
 }
 
 func (n *NormalMode) GetStatusText() string {
+	if n.gPrefix {
+		return "g"
+	}
 	return ""
+}
+
+// executeLSPCommand executes an LSP command via command mode
+func (n *NormalMode) executeLSPCommand(command string, buf *buffer.Buffer) ModeResult {
+	// We need to execute the command through the command system
+	// For now, just return a message
+	// TODO: Integrate with command execution system
+	return ModeResult{Handled: true}
 }

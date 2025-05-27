@@ -29,6 +29,7 @@ const (
 	KeyActionCtrlS
 	KeyActionCtrlQ
 	KeyActionCtrlZ
+	KeyActionCtrlSpace
 	KeyActionResize
 )
 
@@ -118,6 +119,11 @@ func (ep *EventProcessor) processKeyEvent(ev *tcell.EventKey) KeyEvent {
 		keyEvent.Action = KeyActionCtrlQ
 	case tcell.KeyCtrlZ:
 		keyEvent.Action = KeyActionCtrlZ
+	case tcell.KeyNUL:
+		// Ctrl+Space
+		if ev.Modifiers()&tcell.ModCtrl != 0 {
+			keyEvent.Action = KeyActionCtrlSpace
+		}
 	case tcell.KeyRune:
 		// Handle printable characters
 		if ev.Rune() != 0 {

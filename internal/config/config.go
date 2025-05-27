@@ -15,6 +15,7 @@ type Config struct {
 	Editor    EditorConfig              `yaml:"editor" json:"editor"`
 	Providers []ai.ProviderConfig       `yaml:"providers" json:"providers"`
 	AI        AIConfig                  `yaml:"ai" json:"ai"`
+	LSP       LSPConfig                 `yaml:"lsp" json:"lsp"`
 }
 
 // EditorConfig holds editor-specific settings
@@ -36,6 +37,26 @@ type AIConfig struct {
 	MaxTokens           int      `yaml:"max_tokens" json:"max_tokens"`
 	Temperature         float64  `yaml:"temperature" json:"temperature"`
 	EnabledCommands     []string `yaml:"enabled_commands" json:"enabled_commands"`
+}
+
+// LSPConfig holds LSP-specific settings
+type LSPConfig struct {
+	Enabled          bool              `yaml:"enabled" json:"enabled"`
+	AutoStart        bool              `yaml:"auto_start" json:"auto_start"`
+	ShowDiagnostics  bool              `yaml:"show_diagnostics" json:"show_diagnostics"`
+	CompletionTrigger string           `yaml:"completion_trigger" json:"completion_trigger"` // "auto" or "manual"
+	Servers          []LSPServerConfig `yaml:"servers" json:"servers"`
+}
+
+// LSPServerConfig holds configuration for a specific LSP server
+type LSPServerConfig struct {
+	Name       string            `yaml:"name" json:"name"`
+	Command    string            `yaml:"command" json:"command"`
+	Args       []string          `yaml:"args" json:"args"`
+	Languages  []string          `yaml:"languages" json:"languages"`
+	Extensions []string          `yaml:"extensions" json:"extensions"`
+	Enabled    bool              `yaml:"enabled" json:"enabled"`
+	Settings   map[string]interface{} `yaml:"settings" json:"settings"`
 }
 
 // DefaultConfig returns the default configuration
@@ -64,6 +85,21 @@ func DefaultConfig() *Config {
 				BaseURL: "http://localhost:11434",
 				Model:   "llama2",
 				Enabled: true,
+			},
+		},
+		LSP: LSPConfig{
+			Enabled:          true,
+			AutoStart:        true,
+			ShowDiagnostics:  true,
+			CompletionTrigger: "manual",
+			Servers: []LSPServerConfig{
+				{
+					Name:       "gopls",
+					Command:    "gopls",
+					Languages:  []string{"go"},
+					Extensions: []string{"go"},
+					Enabled:    true,
+				},
 			},
 		},
 	}
@@ -298,6 +334,44 @@ func GenerateExample(path string) error {
 				BaseURL: "http://localhost:11434",
 				Model:   "llama2",
 				Enabled: true,
+			},
+		},
+		LSP: LSPConfig{
+			Enabled:          true,
+			AutoStart:        true,
+			ShowDiagnostics:  true,
+			CompletionTrigger: "manual",
+			Servers: []LSPServerConfig{
+				{
+					Name:       "gopls",
+					Command:    "gopls",
+					Languages:  []string{"go"},
+					Extensions: []string{"go"},
+					Enabled:    true,
+				},
+				{
+					Name:       "rust-analyzer",
+					Command:    "rust-analyzer",
+					Languages:  []string{"rust"},
+					Extensions: []string{"rs"},
+					Enabled:    false,
+				},
+				{
+					Name:       "pyright",
+					Command:    "pyright-langserver",
+					Args:       []string{"--stdio"},
+					Languages:  []string{"python"},
+					Extensions: []string{"py"},
+					Enabled:    false,
+				},
+				{
+					Name:       "typescript-language-server",
+					Command:    "typescript-language-server",
+					Args:       []string{"--stdio"},
+					Languages:  []string{"javascript", "typescript"},
+					Extensions: []string{"js", "ts", "jsx", "tsx"},
+					Enabled:    false,
+				},
 			},
 		},
 	}

@@ -61,6 +61,12 @@ func NewCommandRegistry() *CommandRegistry {
 	registry.RegisterCommand(NewConfigShowCommand())
 	registry.RegisterCommand(NewConfigReloadCommand())
 	
+	// Register LSP commands
+	registry.RegisterCommand(NewHoverCommand())
+	registry.RegisterCommand(NewDefinitionCommand())
+	registry.RegisterCommand(NewReferencesCommand())
+	registry.RegisterCommand(NewRenameCommand())
+	
 	return registry
 }
 

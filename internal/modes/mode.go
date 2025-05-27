@@ -2,6 +2,7 @@ package modes
 
 import (
 	"github.com/dshills/aied/internal/buffer"
+	"github.com/dshills/aied/internal/lsp"
 	"github.com/dshills/aied/internal/ui"
 )
 
@@ -138,6 +139,14 @@ func (mm *ModeManager) GetStatusText() string {
 		return ""
 	}
 	return mm.currentMode.GetStatusText()
+}
+
+// SetLSPManager sets the LSP manager for modes that support it
+func (mm *ModeManager) SetLSPManager(lspManager *lsp.Manager) {
+	// Set LSP manager on insert mode for completions
+	if insertMode, ok := mm.modes[ModeInsert].(*InsertMode); ok {
+		insertMode.SetLSPManager(lspManager)
+	}
 }
 
 // GetCommandInfo returns command line and message if in command mode

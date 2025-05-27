@@ -27,6 +27,10 @@ type StyleConfig struct {
 	Cursor     tcell.Style
 	StatusLine tcell.Style
 	LineNumber tcell.Style
+	Error      tcell.Style
+	Warning    tcell.Style
+	Info       tcell.Style
+	Hint       tcell.Style
 }
 
 // NewRenderer creates a new renderer for the given screen
@@ -58,6 +62,10 @@ func NewDefaultStyles() *StyleConfig {
 		Cursor:     tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tcell.ColorWhite),
 		StatusLine: tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tcell.ColorSilver),
 		LineNumber: tcell.StyleDefault.Foreground(tcell.ColorGray).Background(tcell.ColorBlack),
+		Error:      tcell.StyleDefault.Foreground(tcell.ColorRed).Background(tcell.ColorBlack).Underline(true),
+		Warning:    tcell.StyleDefault.Foreground(tcell.ColorYellow).Background(tcell.ColorBlack).Underline(true),
+		Info:       tcell.StyleDefault.Foreground(tcell.ColorBlue).Background(tcell.ColorBlack).Underline(true),
+		Hint:       tcell.StyleDefault.Foreground(tcell.ColorGray).Background(tcell.ColorBlack).Underline(true),
 	}
 }
 
@@ -89,8 +97,13 @@ func (r *Renderer) RenderBuffer(buf *buffer.Buffer) {
 			continue
 		}
 		
-		// Render the line with cursor highlighting
-		r.renderLine(screenY, line, bufferLine, cursor)
+		// Render the line with cursor and diagnostic highlighting
+		diagnostics := buf.GetDiagnosticsForLine(bufferLine)
+		if len(diagnostics) > 0 {
+			r.renderLineWithDiagnostics(screenY, line, bufferLine, cursor, diagnostics)
+		} else {
+			r.renderLine(screenY, line, bufferLine, cursor)
+		}
 	}
 	
 	// Render status line
@@ -141,6 +154,57 @@ func (r *Renderer) renderLine(screenY int, line string, bufferLine int, cursor b
 		}
 		
 		// Highlight cursor position
+		if bufferLine == cursor.Line && bufferCol == cursor.Col {
+			style = r.styles.Cursor
+			// Show a space if at end of line
+			if bufferCol >= len(runes) {
+				ch = ' '
+			}
+		}
+		
+		r.screen.SetCell(screenX, screenY, ch, style)
+	}
+}
+
+// renderLineWithDiagnostics draws a single line with cursor and diagnostic highlighting
+func (r *Renderer) renderLineWithDiagnostics(screenY int, line string, bufferLine int, cursor buffer.Position, diagnostics []buffer.Diagnostic) {
+	// Convert line to runes for proper unicode handling
+	runes := []rune(line)
+	
+	// Create a map of column positions to diagnostic severity
+	diagMap := make(map[int]int)
+	for _, diag := range diagnostics {
+		if diag.Line == bufferLine {
+			diagMap[diag.Column] = diag.Severity
+		}
+	}
+	
+	for screenX := 0; screenX < r.viewport.Width; screenX++ {
+		bufferCol := r.viewport.StartCol + screenX
+		style := r.styles.Normal
+		
+		var ch rune = ' '
+		
+		// Get character if within line bounds
+		if bufferCol < len(runes) {
+			ch = runes[bufferCol]
+		}
+		
+		// Check for diagnostics at this position
+		if severity, ok := diagMap[bufferCol]; ok {
+			switch severity {
+			case 1: // Error
+				style = r.styles.Error
+			case 2: // Warning
+				style = r.styles.Warning
+			case 3: // Info
+				style = r.styles.Info
+			case 4: // Hint
+				style = r.styles.Hint
+			}
+		}
+		
+		// Highlight cursor position (overrides diagnostic highlighting)
 		if bufferLine == cursor.Line && bufferCol == cursor.Col {
 			style = r.styles.Cursor
 			// Show a space if at end of line
