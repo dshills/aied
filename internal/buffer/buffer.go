@@ -171,6 +171,29 @@ func (b *Buffer) InsertChar(ch rune) error {
 	return nil
 }
 
+// InsertTextAt inserts text at a specific position
+func (b *Buffer) InsertTextAt(line, col int, text string) error {
+	if line < 0 || line >= len(b.lines) {
+		return fmt.Errorf("line %d out of range", line)
+	}
+
+	lineContent := b.lines[line]
+	if col < 0 || col > len(lineContent) {
+		return fmt.Errorf("column %d out of range for line length %d", col, len(lineContent))
+	}
+
+	// Insert text at the specified position
+	newLine := lineContent[:col] + text + lineContent[col:]
+	b.lines[line] = newLine
+	
+	// Move cursor to end of inserted text
+	b.cursor.Line = line
+	b.cursor.Col = col + len(text)
+	b.setModified(true)
+
+	return nil
+}
+
 // DeleteChar deletes the character at the current cursor position
 func (b *Buffer) DeleteChar() error {
 	if b.cursor.Line < 0 || b.cursor.Line >= len(b.lines) {
