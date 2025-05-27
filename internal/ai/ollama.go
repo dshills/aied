@@ -245,7 +245,11 @@ func (p *OllamaProvider) buildPrompt(req AIRequest, requestType string) string {
 	case "completion":
 		return fmt.Sprintf("Complete the following code:\n\n%s", req.Prompt)
 	case "analysis":
-		return fmt.Sprintf("Analyze the following code and provide suggestions for improvement:\n\n%s", req.Prompt)
+		prompt := fmt.Sprintf("Analyze the following code and provide suggestions for improvement:\n\n%s", req.Context)
+		if req.Prompt != "" {
+			prompt += fmt.Sprintf("\n\nSpecific focus: %s", req.Prompt)
+		}
+		return prompt
 	default:
 		return req.Prompt
 	}
