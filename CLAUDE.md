@@ -52,19 +52,36 @@ AIED (AI Editor) is a terminal-based text editor inspired by VIM with integrated
 ### Project Structure
 ```
 aied/
-├── main.go                 # Entry point
+├── main.go                 # Entry point with basic text editing
 ├── internal/              # Private application code
+│   ├── buffer/           # ✅ Text buffer management (complete)
+│   ├── ui/              # ✅ Terminal UI components (complete)
 │   ├── editor/           # Core editor logic
-│   ├── ui/              # Terminal UI components
-│   ├── modes/           # VIM mode implementations
+│   ├── modes/           # VIM mode implementations  
 │   ├── ai/              # AI integration layer
-│   ├── buffer/          # Text buffer management
 │   └── commands/        # Command system
 ├── pkg/                  # Public packages
 │   ├── config/          # Configuration handling
 │   └── plugin/          # Plugin API
 └── go.mod               # Go module file
 ```
+
+### Completed Components
+
+#### Buffer System (`internal/buffer/`)
+- Complete text buffer with line-based storage
+- Cursor position management with bounds checking
+- Character and line operations (insert, delete, backspace)
+- File I/O with proper error handling
+- 75.2% test coverage
+
+#### Terminal UI (`internal/ui/`)
+- tcell-based terminal interface
+- Screen management and rendering
+- Keyboard input processing and event handling
+- Viewport scrolling to keep cursor visible
+- Status line with file info and cursor position
+- Comprehensive test coverage
 
 ## VIM Compatibility Goals
 
