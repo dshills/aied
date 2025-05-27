@@ -1,9 +1,11 @@
 name: Release
 
+# Temporarily disabled - remove the condition below to re-enable
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
+  # push:
+  #   tags:
+  #     - 'v*'
 
 permissions:
   contents: write
