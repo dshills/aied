@@ -1,0 +1,54 @@
+# AIED Configuration Example
+# Copy this file to .aied.yaml and customize as needed
+
+editor:
+  tab_size: 4
+  indent_style: spaces  # or "tabs"
+  line_numbers: true
+  theme: default
+  auto_save: false
+  auto_save_delay: 60  # seconds
+
+ai:
+  default_provider: ollama  # openai, anthropic, google, ollama
+  enable_completion: true
+  completion_delay: 500  # milliseconds
+  context_lines: 10
+  max_tokens: 1000
+  temperature: 0.3
+  enabled_commands:
+    - ai
+    - aic
+    - aie
+    - air
+    - aip
+
+providers:
+  # OpenAI Configuration
+  - type: openai
+    api_key: ${OPENAI_API_KEY}  # Can use environment variable
+    model: gpt-4
+    base_url: https://api.openai.com/v1
+    enabled: true
+    options:
+      timeout: 30
+
+  # Anthropic Configuration  
+  - type: anthropic
+    api_key: ${ANTHROPIC_API_KEY}
+    model: claude-3-5-sonnet-20241022
+    base_url: https://api.anthropic.com/v1
+    enabled: true
+
+  # Google Configuration
+  - type: google
+    api_key: ${GOOGLE_API_KEY}
+    model: gemini-1.5-flash
+    base_url: https://generativelanguage.googleapis.com/v1beta/models
+    enabled: false
+
+  # Ollama Configuration (Local)
+  - type: ollama
+    base_url: http://localhost:11434
+    model: llama2
+    enabled: true

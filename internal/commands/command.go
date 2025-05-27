@@ -56,6 +56,11 @@ func NewCommandRegistry() *CommandRegistry {
 	registry.RegisterCommand(NewAIChatCommand())
 	registry.RegisterCommand(NewAIProviderCommand())
 	
+	// Register config commands
+	registry.RegisterCommand(NewConfigGenerateCommand())
+	registry.RegisterCommand(NewConfigShowCommand())
+	registry.RegisterCommand(NewConfigReloadCommand())
+	
 	return registry
 }
 

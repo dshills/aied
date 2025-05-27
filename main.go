@@ -7,6 +7,7 @@ import (
 	"github.com/dshills/aied/internal/ai"
 	"github.com/dshills/aied/internal/buffer"
 	"github.com/dshills/aied/internal/commands"
+	"github.com/dshills/aied/internal/config"
 	"github.com/dshills/aied/internal/modes"
 	"github.com/dshills/aied/internal/ui"
 )
@@ -104,44 +105,27 @@ func handleFallbackKeyEvent(event ui.KeyEvent, buf *buffer.Buffer, terminalUI *u
 // initializeAI sets up the AI system with available providers
 func initializeAI() *ai.AIManager {
 	aiManager := ai.NewAIManager()
-
-	// Initialize providers based on environment variables
-	// OpenAI
-	if apiKey := os.Getenv("OPENAI_API_KEY"); apiKey != "" {
-		provider := ai.NewOpenAIProvider()
-		provider.Configure(ai.ProviderConfig{
-			APIKey: apiKey,
-			Model:  "gpt-4",
-		})
-		aiManager.RegisterProvider(provider)
+	
+	// Load configuration
+	cfg, err := config.Load()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: Failed to load config: %v\n", err)
+		// Continue with defaults
+		cfg = config.DefaultConfig()
 	}
-
-	// Anthropic
-	if apiKey := os.Getenv("ANTHROPIC_API_KEY"); apiKey != "" {
-		provider := ai.NewAnthropicProvider()
-		provider.Configure(ai.ProviderConfig{
-			APIKey: apiKey,
-			Model:  "claude-3-5-sonnet-20241022",
-		})
-		aiManager.RegisterProvider(provider)
+	
+	// Configure providers from config file
+	err = aiManager.ConfigureProviders(cfg.Providers)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Warning: Failed to configure providers: %v\n", err)
 	}
-
-	// Google
-	if apiKey := os.Getenv("GOOGLE_API_KEY"); apiKey != "" {
-		provider := ai.NewGoogleProvider()
-		provider.Configure(ai.ProviderConfig{
-			APIKey: apiKey,
-			Model:  "gemini-1.5-flash",
-		})
-		aiManager.RegisterProvider(provider)
+	
+	// Set default provider if specified
+	if cfg.AI.DefaultProvider != "" {
+		if err := aiManager.SetActiveProvider(ai.ProviderType(cfg.AI.DefaultProvider)); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: Failed to set default provider: %v\n", err)
+		}
 	}
-
-	// Ollama (always try to register - it will check if available)
-	ollamaProvider := ai.NewOllamaProvider()
-	ollamaProvider.Configure(ai.ProviderConfig{
-		Model: "llama2",
-	})
-	aiManager.RegisterProvider(ollamaProvider)
-
+	
 	return aiManager
 }
