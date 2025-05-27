@@ -162,6 +162,11 @@ func (r *Renderer) renderEmptyLine(screenY int) {
 
 // renderStatusLine draws the status line at the bottom
 func (r *Renderer) renderStatusLine(buf *buffer.Buffer) {
+	r.renderStatusLineWithMode(buf, "")
+}
+
+// renderStatusLineWithMode draws the status line with mode information
+func (r *Renderer) renderStatusLineWithMode(buf *buffer.Buffer, modeText string) {
 	_, height := r.screen.Size()
 	statusY := height - 1
 	
@@ -176,12 +181,16 @@ func (r *Renderer) renderStatusLine(buf *buffer.Buffer) {
 		modified = "[+]"
 	}
 	
-	// Format: "filename [+] - Line: 1, Col: 1"
+	// Format: "filename [+] - Line: 1, Col: 1 - MODE"
 	status := ""
 	if len(filename) + len(modified) > 0 {
 		status = filename + " " + modified + " - "
 	}
 	status += "Line: " + formatInt(cursor.Line+1) + ", Col: " + formatInt(cursor.Col+1)
+	
+	if modeText != "" {
+		status += " - " + modeText
+	}
 	
 	// Clear the status line
 	for x := 0; x < r.viewport.Width; x++ {
