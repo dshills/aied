@@ -72,6 +72,7 @@ func NewModeManager() *ModeManager {
 	mm.RegisterMode(NewNormalMode())
 	mm.RegisterMode(NewInsertMode())
 	mm.RegisterMode(NewVisualMode())
+	mm.RegisterMode(NewCommandMode())
 
 	// Start in Normal mode
 	mm.SwitchToMode(ModeNormal, nil)
@@ -137,4 +138,17 @@ func (mm *ModeManager) GetStatusText() string {
 		return ""
 	}
 	return mm.currentMode.GetStatusText()
+}
+
+// GetCommandInfo returns command line and message if in command mode
+func (mm *ModeManager) GetCommandInfo() (string, string, bool) {
+	if mm.currentMode == nil {
+		return "", "", false
+	}
+	
+	if cmdMode, ok := mm.currentMode.(*CommandMode); ok {
+		return cmdMode.GetCommandLine(), cmdMode.GetMessage(), true
+	}
+	
+	return "", "", false
 }

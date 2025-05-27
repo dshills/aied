@@ -66,7 +66,13 @@ func main() {
 
 		// Re-render after any changes with current mode
 		modeText := modeManager.GetStatusText()
-		terminalUI.RenderWithMode(buf, modeText)
+		
+		// Check if we're in command mode and need to show command line
+		if commandLine, message, isCommandMode := modeManager.GetCommandInfo(); isCommandMode {
+			terminalUI.RenderWithModeAndCommand(buf, modeText, commandLine, message)
+		} else {
+			terminalUI.RenderWithMode(buf, modeText)
+		}
 	}
 }
 
