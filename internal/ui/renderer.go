@@ -201,6 +201,39 @@ func (r *Renderer) renderStatusLineWithMode(buf *buffer.Buffer, modeText string)
 	r.screen.SetText(0, statusY, status, r.styles.StatusLine)
 }
 
+// renderStatusLineWithModeAndCommand draws the status line with mode, command line, and message
+func (r *Renderer) renderStatusLineWithModeAndCommand(buf *buffer.Buffer, modeText, commandLine, message string) {
+	_, height := r.screen.Size()
+	statusY := height - 1
+	
+	// If we have a command line, show it instead of the normal status
+	if commandLine != "" {
+		// Clear the status line
+		for x := 0; x < r.viewport.Width; x++ {
+			r.screen.SetCell(x, statusY, ' ', r.styles.StatusLine)
+		}
+		
+		// Draw command line
+		r.screen.SetText(0, statusY, commandLine, r.styles.StatusLine)
+		return
+	}
+	
+	// If we have a message, show it
+	if message != "" {
+		// Clear the status line
+		for x := 0; x < r.viewport.Width; x++ {
+			r.screen.SetCell(x, statusY, ' ', r.styles.StatusLine)
+		}
+		
+		// Draw message
+		r.screen.SetText(0, statusY, message, r.styles.StatusLine)
+		return
+	}
+	
+	// Otherwise show normal status with mode
+	r.renderStatusLineWithMode(buf, modeText)
+}
+
 // UpdateViewport updates the viewport size (called on resize)
 func (r *Renderer) UpdateViewport(width, height int) {
 	r.viewport.Width = width

@@ -52,14 +52,14 @@ AIED (AI Editor) is a terminal-based text editor inspired by VIM with integrated
 ### Project Structure
 ```
 aied/
-├── main.go                 # Entry point with VIM-style modal editing
+├── main.go                 # Entry point with complete VIM editor
 ├── internal/              # Private application code
 │   ├── buffer/           # ✅ Text buffer management (complete)
 │   ├── ui/              # ✅ Terminal UI components (complete)
 │   ├── modes/           # ✅ VIM mode implementations (complete)
+│   ├── commands/        # ✅ VIM command system (complete)
 │   ├── editor/           # Core editor logic
-│   ├── ai/              # AI integration layer
-│   └── commands/        # Command system
+│   └── ai/              # AI integration layer
 ├── pkg/                  # Public packages
 │   ├── config/          # Configuration handling
 │   └── plugin/          # Plugin API
@@ -81,16 +81,25 @@ aied/
 - Keyboard input processing and event handling
 - Viewport scrolling to keep cursor visible
 - Status line with file info and cursor position
-- Mode-aware rendering and status display
+- Mode-aware rendering and command line display
 - Comprehensive test coverage
 
 #### VIM Modes System (`internal/modes/`)
-- Complete modal editing system with Normal, Insert, and Visual modes
+- Complete modal editing system with Normal, Insert, Visual, and Command modes
 - Mode manager with seamless mode transitions
 - VIM-compatible navigation (hjkl, word movement, line operations)
 - Mode-specific key bindings and behaviors
 - Status line integration showing current mode
 - Comprehensive test coverage for all modes and transitions
+
+#### VIM Command System (`internal/commands/`)
+- Complete ex-command implementation with Command mode
+- Essential file commands: :w (write), :q (quit), :wq (write-quit), :q! (force quit)
+- Editor commands: :e (edit), :new (new file) with proper error handling
+- Command parsing and execution with comprehensive error messages
+- Command registry for extensibility and alias support
+- Real-time command line display and feedback
+- Comprehensive test coverage for all commands and error cases
 
 ## VIM Compatibility Goals
 

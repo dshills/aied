@@ -95,6 +95,10 @@ func (n *NormalMode) handleCharacter(ch rune, buf *buffer.Buffer) ModeResult {
 	case 'v':
 		return ModeResult{SwitchToMode: &[]ModeType{ModeVisual}[0], Handled: true}
 
+	// Command mode
+	case ':':
+		return ModeResult{SwitchToMode: &[]ModeType{ModeCommand}[0], Handled: true}
+
 	// Deletion
 	case 'x':
 		return n.deleteChar(buf)

@@ -52,6 +52,11 @@ func (ui *UI) Render(buf *buffer.Buffer) {
 
 // RenderWithMode draws the buffer to the screen with mode information
 func (ui *UI) RenderWithMode(buf *buffer.Buffer, modeText string) {
+	ui.RenderWithModeAndCommand(buf, modeText, "", "")
+}
+
+// RenderWithModeAndCommand draws the buffer with mode and command line information
+func (ui *UI) RenderWithModeAndCommand(buf *buffer.Buffer, modeText, commandLine, message string) {
 	ui.renderer.screen.Clear()
 	
 	// Get buffer information
@@ -82,8 +87,8 @@ func (ui *UI) RenderWithMode(buf *buffer.Buffer, modeText string) {
 		ui.renderer.renderLine(screenY, line, bufferLine, cursor)
 	}
 	
-	// Render status line with mode
-	ui.renderer.renderStatusLineWithMode(buf, modeText)
+	// Render status line with mode, command line, and message
+	ui.renderer.renderStatusLineWithModeAndCommand(buf, modeText, commandLine, message)
 	
 	ui.renderer.screen.Show()
 }
