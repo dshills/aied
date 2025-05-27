@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/dshills/aied/internal/buffer"
+	"github.com/dshills/aied/internal/modes"
 	"github.com/dshills/aied/internal/ui"
 )
 
@@ -33,8 +34,12 @@ func main() {
 	}
 	defer terminalUI.Close()
 
-	// Initial render
-	terminalUI.Render(buf)
+	// Create mode manager (starts in Normal mode)
+	modeManager := modes.NewModeManager()
+
+	// Initial render with mode
+	modeText := modeManager.GetStatusText()
+	terminalUI.RenderWithMode(buf, modeText)
 
 	// Main event loop
 	for terminalUI.IsRunning() {
@@ -42,66 +47,43 @@ func main() {
 
 		switch ev := event.(type) {
 		case ui.KeyEvent:
-			if handleKeyEvent(ev, buf, terminalUI) {
+			// Handle input through mode system
+			result := modeManager.HandleInput(ev, buf)
+			
+			if result.ExitEditor {
 				break // quit requested
+			}
+			
+			// Handle unhandled events with fallback logic
+			if !result.Handled {
+				if handleFallbackKeyEvent(ev, buf, terminalUI) {
+					break // quit requested
+				}
 			}
 		case ui.ResizeEvent:
 			terminalUI.HandleResize(ev)
 		}
 
-		// Re-render after any changes
-		terminalUI.Render(buf)
+		// Re-render after any changes with current mode
+		modeText := modeManager.GetStatusText()
+		terminalUI.RenderWithMode(buf, modeText)
 	}
 }
 
-// handleKeyEvent processes keyboard input and returns true if quit was requested
-func handleKeyEvent(event ui.KeyEvent, buf *buffer.Buffer, terminalUI *ui.UI) bool {
+// handleFallbackKeyEvent processes unhandled keyboard input and returns true if quit was requested
+func handleFallbackKeyEvent(event ui.KeyEvent, buf *buffer.Buffer, terminalUI *ui.UI) bool {
 	switch event.Action {
 	case ui.KeyActionQuit, ui.KeyActionCtrlC:
 		return true
 
-	case ui.KeyActionChar:
-		// Insert character
-		buf.InsertChar(event.Rune)
-
-	case ui.KeyActionBackspace:
-		buf.Backspace()
-
-	case ui.KeyActionDelete:
-		buf.DeleteChar()
-
-	case ui.KeyActionEnter:
-		buf.InsertLine()
-
-	case ui.KeyActionUp:
-		buf.MoveCursor(-1, 0)
-
-	case ui.KeyActionDown:
-		buf.MoveCursor(1, 0)
-
-	case ui.KeyActionLeft:
-		buf.MoveCursor(0, -1)
-
-	case ui.KeyActionRight:
-		buf.MoveCursor(0, 1)
-
-	case ui.KeyActionHome:
-		cursor := buf.Cursor()
-		buf.SetCursor(buffer.Position{Line: cursor.Line, Col: 0})
-
-	case ui.KeyActionEnd:
-		cursor := buf.Cursor()
-		lineLen := len(buf.CurrentLine())
-		buf.SetCursor(buffer.Position{Line: cursor.Line, Col: lineLen})
-
 	case ui.KeyActionCtrlS:
-		// Save file
+		// Global save command
 		if buf.Filename() != "" {
 			buf.Save()
 		}
 
 	default:
-		// Ignore other keys for now
+		// Ignore other keys - they should be handled by modes
 	}
 
 	return false

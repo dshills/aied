@@ -50,6 +50,44 @@ func (ui *UI) Render(buf *buffer.Buffer) {
 	ui.renderer.RenderBuffer(buf)
 }
 
+// RenderWithMode draws the buffer to the screen with mode information
+func (ui *UI) RenderWithMode(buf *buffer.Buffer, modeText string) {
+	ui.renderer.screen.Clear()
+	
+	// Get buffer information
+	cursor := buf.Cursor()
+	lineCount := buf.LineCount()
+	
+	// Adjust viewport to keep cursor visible
+	ui.renderer.adjustViewport(cursor, lineCount)
+	
+	// Render visible lines
+	for screenY := 0; screenY < ui.renderer.viewport.Height; screenY++ {
+		bufferLine := ui.renderer.viewport.StartLine + screenY
+		
+		if bufferLine >= lineCount {
+			// Past end of buffer, draw empty line
+			ui.renderer.renderEmptyLine(screenY)
+			continue
+		}
+		
+		line, err := buf.Line(bufferLine)
+		if err != nil {
+			// Error getting line, draw empty
+			ui.renderer.renderEmptyLine(screenY)
+			continue
+		}
+		
+		// Render the line with cursor highlighting
+		ui.renderer.renderLine(screenY, line, bufferLine, cursor)
+	}
+	
+	// Render status line with mode
+	ui.renderer.renderStatusLineWithMode(buf, modeText)
+	
+	ui.renderer.screen.Show()
+}
+
 // WaitForEvent blocks until an input event is available
 func (ui *UI) WaitForEvent() interface{} {
 	return ui.processor.WaitForEvent()
