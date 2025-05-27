@@ -1,0 +1,84 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
+    
+    - name: Run tests
+      run: go test -v ./...
+    
+    - name: Build binaries
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/}
+        mkdir -p dist
+        
+        # Build for multiple platforms
+        PLATFORMS="darwin/amd64 darwin/arm64 linux/amd64 linux/arm64 windows/amd64"
+        for platform in $PLATFORMS; do
+          GOOS=${platform%/*}
+          GOARCH=${platform#*/}
+          output_name=aied-$VERSION-$GOOS-$GOARCH
+          if [ $GOOS = "windows" ]; then
+            output_name+='.exe'
+          fi
+          echo "Building $output_name..."
+          GOOS=$GOOS GOARCH=$GOARCH go build \
+            -ldflags "-s -w -X main.Version=$VERSION" \
+            -o dist/$output_name .
+        done
+    
+    - name: Create archives
+      run: |
+        cd dist
+        for file in aied-*; do
+          if [[ "$file" == *.exe ]]; then
+            # Create zip for Windows
+            base_name="${file%.exe}"
+            zip "$base_name.zip" "$file" ../README.md ../LICENSE ../CHANGELOG.md ../.aied.yaml.example
+          else
+            # Create tar.gz for Unix
+            tar czf "$file.tar.gz" "$file" -C .. README.md LICENSE CHANGELOG.md .aied.yaml.example
+          fi
+        done
+        cd ..
+    
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # Extract changelog for current version
+        VERSION=${GITHUB_REF#refs/tags/}
+        CHANGELOG=$(sed -n "/## \[$VERSION\]/,/## \[/p" CHANGELOG.md | sed '$ d')
+        echo "changelog<<EOF" >> $GITHUB_OUTPUT
+        echo "$CHANGELOG" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        body: ${{ steps.changelog.outputs.changelog }}
+        files: |
+          dist/*.tar.gz
+          dist/*.zip
+        draft: false
+        prerelease: false
+        generate_release_notes: true
