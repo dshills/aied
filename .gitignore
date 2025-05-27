@@ -28,3 +28,6 @@ aied
 # Local configuration
 .env
 .env.local
+.aied.yaml
+.aied.json
+.claude/
